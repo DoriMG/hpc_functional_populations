@@ -1,0 +1,5 @@
+step_data columns:
+- Time in training (relative)
+- Training day 
+- Step completed
+- Animal number
