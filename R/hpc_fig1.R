@@ -146,11 +146,7 @@ anova(lmm)
 write.csv(anova(lmm), "test.csv")
 aggregate(value ~ nov*loc  + (1|mouse), perf_data, function(x) c(mean = mean(x), sd = sd(x),length = length(x)))
 
-em_res = emmeans(lmm,  ~loc*training*nov, adjust = "tukey")
-contrast(em_res, adjust = "tukey")
-pairs(em_res,  by=c("loc"),adjust = "tukey")
-
-em_res = emmeans(lmm,  ~loc, adjust = "tukey")
+em_res = emmeans(lmm,  ~loc*nov, adjust = "tukey")
 contrast(em_res, adjust = "tukey")
 tt = as.data.frame(pairs(em_res,adjust = "tukey"))
 tt
@@ -166,6 +162,6 @@ plot_all = plot_temp +
   theme_classic()
 
 plot_all
-ggsave(file.path(folder,'figures\\fig1_behaviors_v3.png'), plot_all, height = 8, width = 8)
-ggsave(file.path(folder,'figures\\fig1_behaviors_v3.pdf'), plot_all, height = 8, width = 8)
+ggsave(file.path(out_folder,'fig1_behaviors_v3.png'), plot_all, height = 8, width = 8)
+ggsave(file.path(out_folder,'fig1_behaviors_v3.pdf'), plot_all, height = 8, width = 8)
 
