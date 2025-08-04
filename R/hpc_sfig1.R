@@ -83,6 +83,6 @@ plot_all = plot_temp +
   theme_classic()
 
 plot_all
-ggsave(file.path(folder,'figures\\fig1_behaviors_v3.png'), plot_all, height = 8, width = 8)
-ggsave(file.path(folder,'figures\\fig1_behaviors_v3.pdf'), plot_all, height = 8, width = 8)
+ggsave(file.path(folder,'sfig1.png'), plot_all, height = 8, width = 8)
+ggsave(file.path(folder,'sfig1.pdf'), plot_all, height = 8, width = 8)
 
