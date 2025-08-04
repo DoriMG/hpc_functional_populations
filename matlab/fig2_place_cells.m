@@ -72,13 +72,13 @@ end
 
 diff_bins = nan(size(data_files,1),4,3);
 % familiar location blue ball
-diff_bins(:,:,2) = nanmean(pc_center_per_loc(:,:,4:7),3);
+diff_bins(:,:,2) = nansum(pc_center_per_loc(:,:,4:7),3)/4/10;
 % familiar location control object
-diff_bins(:,:,1) = nanmean(pc_center_per_loc(:,:,14:17),3);
+diff_bins(:,:,1) = nansum(pc_center_per_loc(:,:,14:17),3)/4/10;
 % reward location
-diff_bins(:,:,3) = nanmean(pc_center_per_loc(:,:,18:20),3);
+diff_bins(:,:,3) = nansum(pc_center_per_loc(:,:,18:20),3)/3/10;
 inc_control = [8:13];
-diff_bins(:,:,4) = nanmean(pc_center_per_loc(:,:,inc_control),3);
+diff_bins(:,:,4) = nansum(pc_center_per_loc(:,:,inc_control),3)/6/10;
 
 datatemp = [save_to_R(diff_bins(allSteps<0,1:4,:)); save_to_R(diff_bins(allSteps>0,1:4,:))];
 training = [save_to_R(ones(sum(allSteps<0),4,4)); save_to_R(ones(sum(allSteps>0),4,4)*2)];
@@ -199,8 +199,8 @@ for i = 1:size(data_files,1)
     allPCs(isnan(allPCs)) = 0;
     
     load(fullfile(f,'Fall.mat'));
-    spks = spks>0;
-    
+    spks = spks(logical(iscell(:,1)),:)>0;
+
     mean_error_p_env = nan(4,1);
     all_post = {};
     for n = 1:2 % DOel object or not
@@ -235,7 +235,7 @@ for i = 1:size(data_files,1)
                 true_loco = discretize(loco,nbins);
                 [~,pred] = max(probs,[],2);
                 error = min(abs(pred-true_loco), 147.5-abs(pred-true_loco));
-                bin_loco = discretize(loco,nLocs);
+                bin_loco = discretize(loco,nbins);
                
                 all_error_p_env_split_rand(i,idx,rep) = nanmean(error);
              end
@@ -271,7 +271,8 @@ for i = 1:size(data_files,1)
     allPCs(isnan(allPCs)) = 0;
     
     load(fullfile(f,'Fall.mat'));
-    spks = spks>0;
+    spks = spks(logical(iscell(:,1)),:)>0;
+   
     
     mean_error_p_env = nan(4,1);
     min_PCs = min(sum(allPCs));

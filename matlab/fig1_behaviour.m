@@ -125,6 +125,7 @@ save('data/speed_p_env.mat', 'data')
 
 %% Speed relative to parts of the environment
 
+vel_ave_p_loc =vel_ave_p_loc *295/7.51;
 diff_bins = nan(size(data_files,1),4,3);
 % familiar location blue ball
 diff_bins(:,:,2) = nanmean(vel_ave_p_loc(:,:,16:35),3);

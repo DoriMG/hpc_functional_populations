@@ -166,8 +166,7 @@ for i = 1:size(data_files,1)
     pcs = ovc & ~pcs; % OVCs is any cells that are ovcs, but not pcs
     
     load(fullfile(f, 'data.mat'));
-    
-    
+
     for n = 1:2 % DOel object or not
         for s = 1:2 % MSC environmnet or not
             idx = (n-1)*2+s;
@@ -193,11 +192,11 @@ end
 
 diff_bins = nan(size(data_files,1),4,3);
 % familiar location blue ball
-diff_bins(:,:,1) = nanmean(pf_centres(:,:,1:7),3);
+diff_bins(:,:,1) = nansum(pf_centres(:,:,1:7),3)/7/10;
 % familiar location control object
-diff_bins(:,:,2) = nanmean(pf_centres(:,:,8:13),3);
+diff_bins(:,:,2) = nansum(pf_centres(:,:,8:13),3)/6/10;
 % reward location
-diff_bins(:,:,3) = nanmean(pf_centres(:,:,14:20),3);
+diff_bins(:,:,3) = nansum(pf_centres(:,:,14:20),3)/7/10;
 datatemp = [save_to_R(diff_bins(allSteps<0,1:4,:)); save_to_R(diff_bins(allSteps>0,1:4,:))];
 training = [save_to_R(ones(sum(allSteps<0),4,3)); save_to_R(ones(sum(allSteps>0),4,3)*2)];
 mice = [save_to_R(repmat(mouse(allSteps<0),1,4,3)); save_to_R(repmat(mouse(allSteps>0),1,4,3))];
@@ -312,7 +311,8 @@ for i = 1:size(data_files,1)
    
     
     load(fullfile(f,'Fall.mat'));
-    spks = spks>0;
+
+    spks = spks(logical(iscell(:,1)),:)>0;
     
     allPCs(isnan(allPCs)) = 0;
     allOVCs(isnan(allOVCs)) = 0;
