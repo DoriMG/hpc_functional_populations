@@ -122,7 +122,7 @@ stat.test
 
 
 # Figure 3E - Correlation with 2 objects
-dataset =readMat(file.path(folder,"batch_analysis\\2point0\\R\\data\\corr_ovc_with_obj.mat"))
+dataset =readMat(file.path(folder,"corr_ovc_with_obj.mat"))
 
 perf_data = dataset[[1]]
 perf_data <- data.table( "value" = perf_data[,1], "dataset" = factor(perf_data[,2]), "sal" = factor(perf_data[,3]), "shuffle" = perf_data[,4], "training" = perf_data[,5], "mouse" = factor(perf_data[,6]))
@@ -185,10 +185,9 @@ anova(lmm)
 aggregate(value ~ sal*loc , perf_data, function(x) c(mean = mean(x), sd = sd(x),length = length(x)))
 write.csv(anova(lmm), "test.csv")
 
-### Decoder stuff
+# Figure 3G -Mean error OVC
 
-## Errors relative to obj
-dataset = readMat(file.path(folder,"batch_analysis\\2point0\\R\\data\\all_error_obj.mat"))
+dataset = readMat(file.path(folder,"all_obj_error.mat"))
 
 perf_data = dataset[[1]]
 perf_data <- data.table( "value" = perf_data[,1], "dataset" = perf_data[,2], "env" = perf_data[,3], "training" = perf_data[,4], "mouse" = perf_data[,5])
@@ -207,6 +206,7 @@ obj_error_plot = ggplot(data=perf_data, aes(x=sal, y=value, fill=sal)) +
   labs(y ='Mean error (cm)', x=NULL, fill=NULL)
 obj_error_plot
 
+# stats
 lmm = lmer(value ~ sal +(1|mouse)+(1|dataset), data =perf_data[perf_data$nov])
 anova(lmm)
 write.csv(anova(lmm), "test.csv")
@@ -219,9 +219,8 @@ stat.test <- perf_data %>%
 stat.test
 
 
-## Error diff for ovc
-
-dataset = readMat(file.path(folder,"batch_analysis\\2point0\\R\\data\\error_diff_ovc.mat"))
+##  Fig 2H -Bayesian decoder contribution of OVCs
+dataset = readMat(file.path(folder,"ovc_error.mat"))
 
 perf_data = dataset[[1]]
 perf_data <- data.table( "value" = perf_data[,1], "dataset" = perf_data[,2], "env" = perf_data[,3], "training" = perf_data[,4], "mouse" = perf_data[,5])
@@ -242,16 +241,11 @@ ovc_diff =  ggplot(data=perf_data, aes(x=sal, y=value, fill=sal)) +
   labs(y ='Error difference (cm)', x=NULL, fill=NULL)
 ovc_diff
 
+# stats
 lmm = lmer(value ~ sal +(1|mouse)+(1|dataset), data =perf_data)
 anova(lmm)
 write.csv(anova(lmm), "test.csv")
 aggregate(value ~ sal  + (1|mouse), perf_data, function(x) c(mean = mean(x), sd = sd(x),length = length(x)))
-
-stat.test <- perf_data[perf_data$nov] %>%
-  wilcox_test(value~sal) %>%
-  adjust_pvalue(method = "BH") %>%
-  add_significance()
-stat.test
 
 stat.test <- perf_data[perf_data$nov] %>%
   group_by(sal) %>%
@@ -260,260 +254,20 @@ stat.test <- perf_data[perf_data$nov] %>%
   add_significance()
 stat.test
 tt = as.data.frame(stat.test)
-## move   stab_plot/ to obc figure
-write.csv(tt, "test.csv")
 
-plot_temp = (tot_plot) /
+## Combine the plots
+plot_temp = (ex_plot) /
   (pc_plot|mi_plot|control_overlap)/
   (binned_centres)/
   (obj_error_plot|ovc_diff)
-  
-
-plot_temp
 
 plot_all= plot_temp  +
   plot_layout(guides = "collect") +
   plot_annotation(tag_levels = 'A')&
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank())
-
-
-ggsave(file.path(folder,'v3\\figures\\fig3_OVCs_v2.png'), plot_all, height = 11, width = 8)
-ggsave(file.path(folder,'v3\\figures\\fig3_OVCs_v2.pdf'), plot_all, height = 11, width = 8)
-
-
-# Supplementary ######################################################################################
-
-
-## overalp
-
-dataset = readMat(file.path(folder,"batch_analysis\\2point0\\R\\data\\ovc_pc_overlap.mat"))
-
-perf_data = dataset[[1]]
-perf_data <- data.table( "value" = perf_data[,1]*100, "dataset" = perf_data[,2], "env" = perf_data[,3], "comp" = factor(perf_data[,4]),"training" =perf_data[,5],  "mouse" = perf_data[,6])
-perf_data$nov = perf_data$env >2
-perf_data$sal = perf_data$env ==2 | perf_data$env ==4
-perf_data =  perf_data[perf_data$nov]
-perf_data = perf_data[perf_data$training==2]
-
-pc_v_ovc_plot = ggplot(data=perf_data, aes(x=sal, y=value, fill=comp)) +
-  stat_summary(fun=mean, geom='bar', alpha=1, position = "stack", width=0.8) +
-  scale_x_discrete(breaks=c(FALSE, TRUE),
-                   labels=c("Sparse","Abundant"))+
-  scale_fill_discrete(labels = c('OVC only','OVC + PC'))+
-  labs(y ='Cells (%)', x=NULL, fill=NULL)
-pc_v_ovc_plot
-
-
-lmm = lmer(value ~ sal*comp +(1|mouse)+(1|dataset), data =perf_data[perf_data$nov])
-anova(lmm)
-
-perf_data = perf_data[perf_data$comp==2]
-pc_v_ovc_plot = ggplot(data=perf_data, aes(x=sal, y=value, fill=sal)) +
-  stat_summary(fun=mean, geom='bar', alpha=1, position = position_dodge(width=0.8), width=0.8) +
-  stat_summary(fun.data = mean_cl_normal, geom="errorbar", width=0.3, position = position_dodge(width=0.8)) +
-  geom_point(position=position_jitter(width = 0.2), alpha=0.5, stroke = 0,shape=16,size=1) +  
-  scale_x_discrete(breaks=c(FALSE, TRUE),
-                   labels=c("Sparse","Abundant"))+
-  scale_fill_manual(labels = c('Sparse', 'Abundant'),values = c("#FFC19C", "#C59AD4"))+
-  labs(y ='% of object-vector cells', x=NULL, fill=NULL)
-pc_v_ovc_plot
-ag <- aggregate(value ~ sal*training , perf_data, function(x) c(mean = mean(x), sd = sd(x),length = length(x)))
-ag
-lmm = lmer(value ~ sal +(1|mouse)+(1|dataset), data =perf_data[perf_data$nov])
-anova(lmm)
-
-## Characteristics
-## PF width
-dataset = readMat(file.path(folder,"batch_analysis\\2point0\\R\\data\\allAvePfs_ovc_v2.mat"))
-
-perf_data = dataset[[1]]
-perf_data <- data.table( "value" = perf_data[,1], 
-                         "dataset" = perf_data[,2], 
-                         "env" = perf_data[,3], "training" = perf_data[,4], "mouse" = perf_data[,5])
-perf_data$nov = perf_data$env >2
-perf_data$sal = perf_data$env ==2 | perf_data$env ==4
-perf_data =  perf_data[perf_data$nov]
-perf_data = perf_data[perf_data$training==2]
-perf_data = perf_data[perf_data$env<5]
-
-pf_plot = ggplot(data=perf_data, aes(x=sal, y=value, fill=sal)) +
-  stat_summary(fun=mean, geom='bar', alpha=1, position = position_dodge(width=0.8), width=0.8) +
-  stat_summary(fun.data = mean_cl_normal, geom="errorbar", width=0.3, position = position_dodge(width=0.8)) +
-  geom_point(position=position_jitter(width = 0.2), alpha=0.5, stroke = 0,shape=16,size=1) +  
-  scale_x_discrete(breaks=c(FALSE, TRUE),
-                   labels=c("Sparse","Abundant"))+
-  scale_fill_manual(labels = c('Sparse', 'Abundant'),values = c("#FFC19C", "#C59AD4"))+
-  labs(y ='Object-vector field width', x=NULL, fill=NULL)
-pf_plot
-aggregate(value ~ sal , perf_data, function(x) c(mean = mean(x), sd = sd(x),length = length(x)))
-
-data_temp = perf_data
-lmm = lmer(value ~ sal +(1|mouse) +(1|dataset), data =data_temp)
-anova(lmm)
-
-## Stability
-dataset = readMat(file.path(folder,"batch_analysis\\2point0\\R\\data\\allAveStab_ovc_v2.mat"))
-
-perf_data = dataset[[1]]
-perf_data <- data.table( "value" = perf_data[,1], "dataset" = perf_data[,2], "env" = perf_data[,3], 
-                         "training" = perf_data[,4], "mouse" = perf_data[,5])
-perf_data$nov = perf_data$env >2
-perf_data$sal = perf_data$env ==2 | perf_data$env ==4
-perf_data =  perf_data[perf_data$nov]
-perf_data = perf_data[perf_data$training==2]
-perf_data = perf_data[perf_data$env<5]
-
-stab_plot =ggplot(data=perf_data, aes(x=sal, y=value, fill=sal)) +
-  stat_summary(fun=mean, geom='bar', alpha=1, position = position_dodge(width=0.8), width=0.8) +
-  stat_summary(fun.data = mean_cl_normal, geom="errorbar", width=0.3, position = position_dodge(width=0.8)) +
-  geom_point(position=position_jitter(width = 0.2), alpha=0.5, stroke = 0,shape=16,size=1) +  
-  scale_x_discrete(breaks=c(FALSE, TRUE),
-                   labels=c("Sparse","Abundant"))+
-  scale_fill_manual(labels = c('Sparse', 'Abundant'),values = c("#FFC19C", "#C59AD4"))+
-  labs(y ='Stability', x=NULL, fill=NULL)
-stab_plot
-
-data_temp = perf_data
-lmm = lmer(value ~ sal +(1|mouse)+(1|dataset), data =data_temp)
-anova(lmm)
-
-## IO
-dataset = readMat(file.path(folder,"batch_analysis\\2point0\\R\\data\\allIO_ovc_v2.mat"))
-
-perf_data = dataset[[1]]
-perf_data <- data.table( "value" = perf_data[,1], "dataset" = perf_data[,2], "env" = perf_data[,3], "training" = perf_data[,4], "mouse" = perf_data[,5], "ntravs"= perf_data[,6])
-perf_data$nov = perf_data$env >2
-perf_data$sal = perf_data$env ==2 | perf_data$env ==4
-perf_data =  perf_data[perf_data$nov]
-perf_data = perf_data[perf_data$training==2]
-perf_data = perf_data[perf_data$env<5]
-
-io_plot =ggplot(data=perf_data, aes(x=sal, y=value, fill=sal)) +
-  stat_summary(fun=mean, geom='bar', alpha=1, position = position_dodge(width=0.8), width=0.8) +
-  stat_summary(fun.data = mean_cl_normal, geom="errorbar", width=0.3, position = position_dodge(width=0.8)) +
-  geom_point(position=position_jitter(width = 0.2), alpha=0.5, stroke = 0,shape=16,size=1) +  
-  scale_x_discrete(breaks=c(FALSE, TRUE),
-                   labels=c("Sparse","Abundant"))+
-  scale_fill_manual(labels = c('Sparse', 'Abundant'),values = c("#FFC19C", "#C59AD4"))+
-  labs(y ='Out/in ratio', x=NULL, fill=NULL)
-io_plot
-aggregate(value ~ training , perf_data, function(x) c(mean = mean(x), sd = sd(x),length = length(x)))
-data_temp = perf_data
-lmm = lmer(value ~ sal +(1|mouse)+(1|dataset), data =data_temp)
-anova(lmm)
-
-
-## Bayesian vs random
-random = readMat(file.path(folder,"batch_analysis\\2point0\\R\\data\\all_error_obj_rand.mat"))
-
-perf_random = random[[1]]
-perf_random <- data.table( "value" = perf_random[,1], "dataset" = perf_random[,2], "env" = perf_random[,3])
-
-perf_random$nov = perf_random$env >2
-perf_random$sal = perf_random$env ==2 | perf_random$env ==4
-perf_random$random = 1
-
-dataset = readMat(file.path(folder,"batch_analysis\\2point0\\R\\data\\all_error_obj.mat"))
-
-perf_data = dataset[[1]]
-perf_data <- data.table( "value" = perf_data[,1], "dataset" = perf_data[,2], "env" = perf_data[,3])
-
-perf_data$nov = perf_data$env >2
-perf_data$sal = perf_data$env ==2 | perf_data$env ==4
-perf_data$random = 0
-
-all_data = rbind(perf_data, perf_random)
-rand_plot_ovc = ggplot(data=all_data, aes(x=sal, y=value, fill=factor(random))) +
-  stat_summary(fun=mean, geom='bar', alpha=1, position = position_dodge(width=0.8), width=0.8) +
-  stat_summary(fun.data = mean_cl_normal, geom="errorbar", width=0.3, position = position_dodge(width=0.8)) +
-  geom_point(position=position_jitterdodge(dodge.width = 0.8, jitter.width = 0.2),alpha=0.5, stroke = 0,shape=16,size=1) +  
-  facet_wrap(~ nov, labeller = labeller(nov = nov_names)) +
-  scale_x_discrete(breaks=c(FALSE, TRUE),
-                   labels=c("Sparse","Abundant")) + 
-  scale_fill_manual(labels = c('Data', 'Shuffled'), values=c("#6962AD", "#96E9C6")) +
-  labs(y ='Prediction error (cm)', x=NULL, fill=NULL)
-rand_plot_ovc
-
-lmm = lmer(value ~ sal*nov + random +(1|dataset), data =all_data)
-anova(lmm)
-
-for(n in 0:1)
-{
-  for(s in 0:1)
-  {
-    print(shapiro.test(all_data[all_data$nov == n&all_data$sal == s& all_data$random == 0]$value))
-    print(shapiro.test(all_data[all_data$nov == n&all_data$sal == s& all_data$random == 1]$value))
-  }
-}
-
-stat.test <- all_data %>%
-  group_by(nov, sal) %>%
-  wilcox_test(value~random, paired=TRUE) %>%
-  adjust_pvalue(method = "BH") %>%
-  add_significance()
-stat.test
-
-plot_temp = (pc_v_ovc_plot|pf_plot|
-               io_plot)/(
-                 stab_plot|
-                   rand_plot_ovc)
-
-
-plot_all = plot_temp +
-  plot_layout(guides = "collect") +
-  plot_annotation(tag_levels = 'A')&
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank())
-
 plot_all
 
-
-save_folder = r"{\\gpfs.corp.brain.mpg.de\bark\personal\grijseelsd\Papers\Sussex\hippocampal_pops\v3\figures}"
-ggsave(file.path(save_folder,'sfig4_ovcs.png'), plot_all, height = 8, width = 12)
-ggsave(file.path(save_folder,'sfig4_ovcs.pdf'), plot_all, height = 8, width = 12)
-
-
-
-#################################Supplementary################################################################
-source("E:\\Dropbox (Brain Energy Lab)\\Everything\\Dori\\Analysis\\batch_analysis\\2point0\\R\\ovc_example_plot.R")
-
-## example plot
-plot5 = ovc_example_plot(5)
-plot_temp = ovc_example_plot(5)/ovc_example_plot(6)/
-  ovc_example_plot(7)/ovc_example_plot(3)/
-  ovc_example_plot(2)/ovc_example_plot(4)
-
-plot_left =   ovc_example_plot(2)/ovc_example_plot(6)/
-  ovc_example_plot(7)
-plot_right = ovc_example_plot(3)/ovc_example_plot(5)/ovc_example_plot(4)
-plot_temp = (plot_left)|(plot_right)
-plot_all = plot_temp +
-  plot_layout(guides = "collect") +
-  plot_annotation(tag_levels = 'A')&
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank())
-
-ggsave('E:\\Dropbox (Brain Energy Lab)\\Everything\\Dori\\Analysis\\batch_analysis\\2point0\\R\\fig6_ovc_supp.png', plot_all, height = 8, width = 12)
-
-ggsave('E:\\Dropbox (Brain Energy Lab)\\Everything\\Dori\\Analysis\\batch_analysis\\2point0\\R\\fig6_ovc_supp.eps', plot_all, device="eps", height = 8, width = 12)
-
-
-
-
-
-plot_temp = (pf_plot|io_plot)/
-  (stab_plot|plot_spacer())/
-  binned_centres+ plot_layout(heights = c(1,1,1))
-plot_temp
-
-plot_all= plot_temp  +
-  plot_layout(guides = "collect") +
-  plot_annotation(tag_levels = 'A')&
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank())
-ggsave('E:\\Dropbox (Brain Energy Lab)\\Everything\\Dori\\Analysis\\batch_analysis\\2point0\\R\\fig6_ovc_supp_2.png', plot_all, height = 8, width =8)
-
-ggsave('E:\\Dropbox (Brain Energy Lab)\\Everything\\Dori\\Analysis\\batch_analysis\\2point0\\R\\fig6_ovc_supp_2.eps', plot_all, height = 8, width =8)
-
+ggsave(file.path(out_folder,'fig3_OVCs.png'), plot_all, height = 11, width = 8)
+ggsave(file.path(out_folder,'fig3_OVCs.pdf'), plot_all, height = 11, width = 8)
 
