@@ -68,6 +68,7 @@ pc_plot
 # Stats
 lmm = lmer(value ~ sal*nov +(1|mouse)+(1|dataset), data =perf_data)
 anova(lmm)
+write.csv(anova(lmm), "test.csv")
 
 
 
@@ -162,13 +163,6 @@ lmm = lmer(value ~ sal*nov +(1|mouse) + (1|dataset), data =perf_data)
 anova(lmm)
 write.csv(anova(lmm), "test.csv")
 
-aggregate(value ~ sal*nov  + (1|mouse), perf_data, function(x) c(mean = mean(x), sd = sd(x),length = length(x)))
-em_res = emmeans(lmm,  ~nov,adjust = "tukey")
-contrast(em_res)
-pairs(em_res, by='sal')
-write.csv(pairs(em_res, by='sal'), "test.csv")
-
-
 ##  Fig 2F -Bayesian decoder contribution of PCs
 dataset = readMat(file.path(folder,"pc_error.mat"))
 
@@ -192,9 +186,6 @@ pc_diff
 # stats
 lmm = lmer(value ~ sal*nov +(1|mouse)+(1|dataset), data =perf_data)
 anova(lmm)
-em_res = emmeans(lmm,  ~nov,adjust = "tukey")
-contrast(em_res)
-pairs(em_res)
 write.csv(anova(lmm), "test.csv")
 
 stat.test <- perf_data %>%
@@ -217,6 +208,6 @@ plot_all = plot_temp +
   plot_annotation(tag_levels = 'A')&
   theme_classic()
 
-ggsave(file.path(out_folder,'fig2_PCs_v2.png'), plot_all, height = 10, width = 8)
-ggsave(file.path(out_folder,'fig2_PCs_v2.pdf'), plot_all, height = 10, width = 8)
+ggsave(file.path(out_folder,'fig2_PCs.png'), plot_all, height = 10, width = 8)
+ggsave(file.path(out_folder,'fig2_PCs.pdf'), plot_all, height = 10, width = 8)
 
