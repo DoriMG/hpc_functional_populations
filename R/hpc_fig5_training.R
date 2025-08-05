@@ -43,14 +43,9 @@ pc_plot = ggplot(data=perf_data[perf_data$env<5], aes(x=nov, y=value, fill=facto
 pc_plot
 
 # stats
-perf_data %>%
-  group_by(nov, sal) %>%
-  summarise(mean= mean(value,na.rm = TRUE))
-
-summary(perf_data)
 lmm = lmer(value ~ sal*nov +(1|mouse)+(1|dataset), data =perf_data)
 anova(lmm)
-
+write.csv(anova(lmm), "test.csv")
 
 ##Fig 5B - MI of place cells
 dataset = readMat(file.path(folder,"allAveMI.mat"))
@@ -71,11 +66,9 @@ mi_plot = ggplot(data=perf_data[perf_data$env<5], aes(x=nov, y=value, fill=facto
   labs(y ='Mutual information', x=NULL, fill=NULL)
 mi_plot
 
-data_temp = perf_data[perf_data$env<5]
-lmm = lmer(value ~ sal*nov +(1|mouse) +(1|dataset), data =data_temp)
+lmm = lmer(value ~ sal*nov +(1|mouse) +(1|dataset), data =perf_data)
 anova(lmm)
 write.csv(anova(lmm), "test.csv")
-
 
 
 ## Fig 5C -Bayesian decoder
@@ -127,6 +120,7 @@ pc_diff
 # Stats
 lmm = lmer(value ~ sal*nov +(1|mouse)+(1|dataset), data =perf_data)
 anova(lmm)
+write.csv(anova(lmm), "test.csv")
 em_res = emmeans(lmm,  ~nov,adjust = "tukey")
 contrast(em_res)
 pairs(em_res)
@@ -309,3 +303,4 @@ plot_all
 
 ggsave(file.path(out_folder,'fig5_training_effect_v2.png'), plot_all, height = 10, width = 10)
 ggsave(file.path(out_folder,'fig5_training_effect_v2.pdf'), plot_all, height = 10, width = 10)
+
