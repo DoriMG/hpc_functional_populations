@@ -53,7 +53,7 @@ pf_plot
 # stats
 lmm = lmer(value ~ sal +(1|mouse) +(1|dataset), data =perf_data)
 anova(lmm)
-
+write.csv(anova(lmm), "test.csv")
 
 ## S Fig 4B- In/out ratio
 dataset = readMat(file.path(folder,"allIO_ovc.mat"))
@@ -76,8 +76,9 @@ io_plot =ggplot(data=perf_data, aes(x=sal, y=value, fill=sal)) +
 io_plot
 
 # stats
-lmm = lmer(value ~ sal +(1|mouse)+(1|dataset), data =data_temp)
+lmm = lmer(value ~ sal +(1|mouse)+(1|dataset), data =perf_data)
 anova(lmm)
+write.csv(anova(lmm), "test.csv")
 
 ## S Fig 4C- Stability
 dataset = readMat(file.path(folder,"allAveStab_ovc.mat"))
@@ -103,6 +104,7 @@ stab_plot
 # stats
 lmm = lmer(value ~ sal +(1|mouse)+(1|dataset), data =perf_data)
 anova(lmm)
+write.csv(anova(lmm), "test.csv")
 
 
 ## Bayesian vs random
@@ -125,6 +127,7 @@ perf_data$sal = perf_data$env ==2 | perf_data$env ==4
 perf_data$random = 0
 
 all_data = rbind(perf_data, perf_random)
+all_data = all_data[all_data$nov == 1]
 rand_plot_ovc = ggplot(data=all_data, aes(x=sal, y=value, fill=factor(random))) +
   stat_summary(fun=mean, geom='bar', alpha=1, position = position_dodge(width=0.8), width=0.8) +
   stat_summary(fun.data = mean_cl_normal, geom="errorbar", width=0.3, position = position_dodge(width=0.8)) +
@@ -136,28 +139,23 @@ rand_plot_ovc = ggplot(data=all_data, aes(x=sal, y=value, fill=factor(random))) 
   labs(y ='Prediction error (cm)', x=NULL, fill=NULL)
 rand_plot_ovc
 
-# stats
-lmm = lmer(value ~ sal*nov + random +(1|dataset), data =all_data)
-anova(lmm)
 
-for(n in 0:1)
-{
-  for(s in 0:1)
-  {
-    print(shapiro.test(all_data[all_data$nov == n&all_data$sal == s& all_data$random == 0]$value))
-    print(shapiro.test(all_data[all_data$nov == n&all_data$sal == s& all_data$random == 1]$value))
-  }
-}
+# stats
+lmm = lmer(value ~ sal + random +(1|dataset), data =all_data)
+anova(lmm)
+write.csv(anova(lmm), "test.csv")
 
 stat.test <- all_data %>%
-  group_by(nov, sal) %>%
+  group_by( sal) %>%
   wilcox_test(value~random, paired=TRUE) %>%
   adjust_pvalue(method = "BH") %>%
   add_significance()
 stat.test
+tt = as.data.frame(stat.test)
+write.csv(tt, "test.csv")
 
 ## Combine the plots
-plot_temp = (pc_v_ovc_plot|pf_plot|
+plot_temp = (pf_plot|
                io_plot)/(
                  stab_plot|
                    rand_plot_ovc)
@@ -166,11 +164,9 @@ plot_temp = (pc_v_ovc_plot|pf_plot|
 plot_all = plot_temp +
   plot_layout(guides = "collect") +
   plot_annotation(tag_levels = 'A')&
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank())
+  theme_classic()
 
 plot_all
-
 
 ggsave(file.path(out_folder,'sfig4_ovcs.png'), plot_all, height = 8, width = 12)
 ggsave(file.path(out_folder,'sfig4_ovcs.pdf'), plot_all, height = 8, width = 12)

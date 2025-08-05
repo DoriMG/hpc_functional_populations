@@ -6,6 +6,8 @@ library(lme4)
 library(lmerTest)
 library(emmeans)
 
+library("dplyr")
+library(rstatix)
 
 folder = r"{D:\Frankfurt\Papers\Sussex\hippocampal_pops\v3\matlab\data}"
 out_folder = r"{D:\Frankfurt\Papers\Sussex\hippocampal_pops\v3\R\figures}"  
@@ -81,14 +83,6 @@ lmm = lmer(value ~ sal +(1|mouse)+(1|dataset), data =perf_data)
 anova(lmm)
 write.csv(anova(lmm), "test.csv")
 
-stat.test <- perf_data %>%
-  wilcox_test(value~sal, paired=TRUE) %>%
-  adjust_pvalue(method = "BH") %>%
-  add_significance()
-stat.test
-
-
-
 ## Figure 3D - Mutual information
 dataset = readMat(file.path(folder,"allAveMI_ovc.mat"))
 
@@ -114,13 +108,6 @@ lmm = lmer(value ~ sal +(1|mouse)+(1|dataset), data =perf_data)
 anova(lmm)
 write.csv(anova(lmm), "test.csv")
 
-stat.test <- perf_data %>%
-  wilcox_test(value~sal, paired=TRUE) %>%
-  adjust_pvalue(method = "BH") %>%
-  add_significance()
-stat.test
-
-
 # Figure 3E - Correlation with 2 objects
 dataset =readMat(file.path(folder,"corr_ovc_with_obj.mat"))
 
@@ -140,20 +127,11 @@ control_overlap
 
 lmm = lmer(value ~ sal*shuffle +(1|mouse)+(1|dataset), data =perf_data)
 anova(lmm)
-aggregate(value ~ sal*shuffle , perf_data, function(x) c(mean = mean(x), sd = sd(x),length = length(x)))
 write.csv(anova(lmm), "test.csv")
 
 em_res = emmeans(lmm,  ~sal*shuffle,adjust = "tukey")
-contrast(em_res)
-pairs(em_res, by='sal')
 write.csv(pairs(em_res, by='sal'), "test.csv")
 
-stat.test <- perf_data %>%
-  group_by(sal) %>%
-  wilcox_test(value~shuffle, paired=TRUE) %>%
-  adjust_pvalue(method = "BH") %>%
-  add_significance()
-stat.test
 
 
 # Figure 3F - Location of OVC centres
@@ -182,8 +160,12 @@ binned_centres
 
 lmm = lmer(value ~ sal*loc +(1|dataset), data =perf_data)
 anova(lmm)
-aggregate(value ~ sal*loc , perf_data, function(x) c(mean = mean(x), sd = sd(x),length = length(x)))
 write.csv(anova(lmm), "test.csv")
+
+
+em_res = emmeans(lmm,  ~loc,adjust = "tukey")
+write.csv(pairs(em_res), "test.csv")
+
 
 # Figure 3G -Mean error OVC
 
@@ -210,13 +192,6 @@ obj_error_plot
 lmm = lmer(value ~ sal +(1|mouse)+(1|dataset), data =perf_data[perf_data$nov])
 anova(lmm)
 write.csv(anova(lmm), "test.csv")
-aggregate(value ~ sal  + (1|mouse), perf_data[perf_data$nov], function(x) c(mean = mean(x), sd = sd(x),length = length(x)))
-
-stat.test <- perf_data %>%
-  wilcox_test(value~sal) %>%
-  adjust_pvalue(method = "BH") %>%
-  add_significance()
-stat.test
 
 
 ##  Fig 2H -Bayesian decoder contribution of OVCs
@@ -245,15 +220,6 @@ ovc_diff
 lmm = lmer(value ~ sal +(1|mouse)+(1|dataset), data =perf_data)
 anova(lmm)
 write.csv(anova(lmm), "test.csv")
-aggregate(value ~ sal  + (1|mouse), perf_data, function(x) c(mean = mean(x), sd = sd(x),length = length(x)))
-
-stat.test <- perf_data[perf_data$nov] %>%
-  group_by(sal) %>%
-  wilcox_test(value~1, mu=0) %>%
-  adjust_pvalue(method = "BH") %>%
-  add_significance()
-stat.test
-tt = as.data.frame(stat.test)
 
 ## Combine the plots
 plot_temp = (ex_plot) /
@@ -264,8 +230,7 @@ plot_temp = (ex_plot) /
 plot_all= plot_temp  +
   plot_layout(guides = "collect") +
   plot_annotation(tag_levels = 'A')&
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank())
+  theme_classic()
 plot_all
 
 ggsave(file.path(out_folder,'fig3_OVCs.png'), plot_all, height = 11, width = 8)
