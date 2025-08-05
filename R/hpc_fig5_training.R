@@ -121,13 +121,18 @@ pc_diff
 lmm = lmer(value ~ sal*nov +(1|mouse)+(1|dataset), data =perf_data)
 anova(lmm)
 write.csv(anova(lmm), "test.csv")
-em_res = emmeans(lmm,  ~nov,adjust = "tukey")
-contrast(em_res)
-pairs(em_res)
+
+stat.test <- perf_data %>%
+  group_by(env) %>%
+  wilcox_test(value~1, mu=0) %>%
+  adjust_pvalue(method = "BH") %>%
+  add_significance()
+stat.test
+tt = as.data.frame(stat.test)
+write.csv(tt, "test.csv")
+
 
 ## Fig 5E -  Object-vector cells
-
-## No ovc
 dataset = readMat(file.path(folder,"mean_ovc_perc.mat"))
 
 perf_data = dataset[[1]]
@@ -203,7 +208,7 @@ raw_place_cell_no
 #stats
 lmm = lmer(value ~factor(comp) +(1|mouse) + (1|dataset), data =perf_data)
 anova(lmm)
-
+write.csv(anova(lmm), "test.csv")
 
 ## Fig 5H Relative number of place cells  
 dataset = readMat(file.path(folder,"pc_overlap_p_cond_diff.mat"))
@@ -227,9 +232,9 @@ overlap_plot_diff = ggplot(data=perf_data, aes(x=comp, y=value, fill=factor(comp
   labs(y ='Place cell overlap \n(% difference from chance)', x=NULL, fill=NULL)+guides(fill="none")
 overlap_plot_diff
 
-lmm = lmer(value ~comp +(1|mouse) + (1|dataset), data =perf_data)
+lmm = lmer(value ~factor(comp) +(1|mouse) + (1|dataset), data =perf_data)
 anova(lmm)
-
+write.csv(anova(lmm), "test.csv")
 
 
 ## Fig 5I -  Cross decoder results
@@ -257,7 +262,7 @@ all_decoder
 #stats
 lmm = lmer(value ~comp +(1|mouse) + (1|dataset), data =perf_data)
 anova(lmm)
-
+write.csv(anova(lmm), "test.csv")
 
 ## Fig 5J -  Cross decoder results - control
 dataset = readMat(file.path(folder,"all_cross_decoder_diff.mat"))
@@ -284,6 +289,16 @@ all_decoder_difference
 #stats
 lmm = lmer(value ~comp +(1|mouse) + (1|dataset), data =perf_data)
 anova(lmm)
+write.csv(anova(lmm), "test.csv")
+
+stat.test <- perf_data %>%
+  group_by(comp) %>%
+  wilcox_test(value~1, mu=0) %>%
+  adjust_pvalue(method = "BH") %>%
+  add_significance()
+stat.test
+tt = as.data.frame(stat.test)
+write.csv(tt, "test.csv")
 
 
 all_plots = 
