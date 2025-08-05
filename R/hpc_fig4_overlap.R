@@ -38,6 +38,7 @@ raw_place_cell_no
 # Stats
 lmm = lmer(value ~factor(comp) +(1|mouse) + (1|dataset), data =perf_data)
 anova(lmm)
+write.csv(anova(lmm), "test.csv")
 
 ## Fig 4B Relative number of place cells
 dataset = readMat(file.path(folder,"pc_overlap_p_cond_diff.mat"))
@@ -64,6 +65,16 @@ overlap_plot_diff
 # stats
 lmm = lmer(value ~comp +(1|mouse) + (1|dataset), data =perf_data)
 anova(lmm)
+write.csv(anova(lmm), "test.csv")
+
+stat.test <- perf_data %>%
+  group_by(comp) %>%
+  wilcox_test(value~1, mu=0) %>%
+  adjust_pvalue(method = "BH") %>%
+  add_significance()
+stat.test
+tt = as.data.frame(stat.test)
+write.csv(tt, "test.csv")
 
 ## Fig 4D -  Both familiar example
 dataset = readMat(file.path(folder,"fig4_cell_10_58.mat"))
@@ -155,7 +166,7 @@ pc_overlap
 # stats
 lmm = lmer(value ~comp +(1|mouse) + (1|dataset), data =perf_data)
 anova(lmm)
-
+write.csv(anova(lmm), "test.csv")
 
 ## Fig 3H -  Cross decoder results
 dataset = readMat(file.path(folder,"all_cross_decoder_error.mat"))
@@ -179,8 +190,13 @@ all_decoder = ggplot(data=perf_data, aes(x=comp, y=value, fill=factor(comp))) +
   labs(y ='Error (cm)', x=NULL, fill=NULL)+guides(fill="none")
 all_decoder
 
+# stats
+lmm = lmer(value ~comp +(1|mouse) + (1|dataset), data =perf_data)
+anova(lmm)
+write.csv(anova(lmm), "test.csv")
 
-## Fig 3H -  Cross decoder results - control
+
+## Fig 3I -  Cross decoder results - control
 dataset = readMat(file.path(folder,"all_cross_decoder_diff.mat"))
 
 perf_data = dataset[[1]]
@@ -202,8 +218,19 @@ all_decoder_difference = ggplot(data=perf_data, aes(x=comp, y=value, fill=factor
   labs(y ='Error difference (cm)', x=NULL, fill=NULL)+guides(fill="none")
 all_decoder_difference
 
+# stats
 lmm = lmer(value ~comp +(1|mouse) + (1|dataset), data =perf_data)
 anova(lmm)
+write.csv(anova(lmm), "test.csv")
+
+stat.test <- perf_data %>%
+  group_by(comp) %>%
+  wilcox_test(value~1, mu=0) %>%
+  adjust_pvalue(method = "BH") %>%
+  add_significance()
+stat.test
+tt = as.data.frame(stat.test)
+write.csv(tt, "test.csv")
 
 
 ## Combine the plots
